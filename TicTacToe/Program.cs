@@ -12,46 +12,86 @@ namespace TicTacToe
         static void Main(string[] args)
         {
             int position;
-            Console.Write("Pick size of game: ");
-            int gameSize = Int32.Parse(Console.ReadLine());
-            char[,] board = new char[gameSize, gameSize];
+            char[,] board = InitializeGame();
+            int gameSize = board.GetLength(0);
             bool gameComplete = false;
             int row;
             int column;
-            var exclude = new HashSet<int>();
-            var range = Enumerable.Range(1, gameSize *  gameSize);
+            List<int> options = Enumerable.Range(0, gameSize * gameSize).ToList();
             var rand = new System.Random();
-            int cpuPosition;
-            Console.WriteLine(PrintBoard(board, true));
             while (!gameComplete)
             {
                 //player choice
                 Console.Write("Choose your position: ");
                 position = Int32.Parse(Console.ReadLine()) - 1;
-                row = position / gameSize;
-                column = position % gameSize;
-                Console.WriteLine(row + " " + column);
-                board[row, column] = 'x';
-                //cpu choice
-                exclude.Add(position);
-                range = range.Where(i => !exclude.Contains(i));
-                cpuPosition = range.ElementAt(rand.Next(0, gameSize * gameSize - exclude.Count)) - 1;
-                exclude.Add(cpuPosition);
-                board[cpuPosition / gameSize, cpuPosition % gameSize] = 'o';
-                Console.WriteLine(PrintBoard(board));
-                if (GameWon(row, column, board, gameSize))
+                if (!options.Contains(position))
+                    Console.WriteLine("Position taken. Please choose another position.");
+                else
                 {
-                    Console.WriteLine("Game Won");
-                    gameComplete = true;
-                    Console.Write("Play Again? ");
-                    if (Console.ReadLine() == "y")
-                        gameComplete = false;
-                        Console.Write("Pick size of game: ");
-                        gameSize = Int32.Parse(Console.ReadLine());
-                        board = new char[gameSize, gameSize];
-                        Console.WriteLine(PrintBoard(board, true));
+                    row = position / gameSize;
+                    column = position % gameSize;
+                    Console.WriteLine(row + " " + column);
+                    board[row, column] = 'x';
+                    options.Remove(position);
+                    if (GameWon(row, column, board, gameSize))
+                    {
+                        Console.WriteLine(PrintBoard(board));
+                        Console.WriteLine("x won");
+                        gameComplete = true;
+                        Console.Write("Play Again? ");
+                        if (Console.ReadLine() == "y")
+                            gameComplete = false;
+                        board = InitializeGame();
+                        gameSize = board.GetLength(0);
+                        options = Enumerable.Range(0, gameSize * gameSize).ToList();
+                    }
+                    else
+                    {
+                        if (options.Count == 0)
+                        {
+                            Console.WriteLine(PrintBoard(board));
+                            Console.WriteLine("Game over, tie.");
+                            Console.Write("Play Again? ");
+                            if (Console.ReadLine() == "y")
+                                gameComplete = false;
+                            board = InitializeGame();
+                            gameSize = board.GetLength(0);
+                            options = Enumerable.Range(0, gameSize * gameSize).ToList();
+                        }
+                        else
+                        {
+                            //cpu choice
+                            position = options[rand.Next(0, options.Count)];
+                            options.Remove(position);
+                            row = position / gameSize;
+                            column = position % gameSize;
+                            board[row, column] = 'o';
+                            Console.WriteLine(PrintBoard(board));
+
+                            if (GameWon(row, column, board, gameSize))
+                            {
+                                Console.WriteLine("o won");
+                                gameComplete = true;
+                                Console.Write("Play Again? ");
+                                if (Console.ReadLine() == "y")
+                                    gameComplete = false;
+                                board = InitializeGame();
+                                gameSize = board.GetLength(0);
+                                options = Enumerable.Range(0, gameSize * gameSize).ToList();
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        static char[,] InitializeGame()
+        {
+            Console.Write("Pick size of game: ");
+            int gameSize = Int32.Parse(Console.ReadLine());
+            char[,] board = new char[gameSize, gameSize];
+            Console.WriteLine(PrintBoard(board, true));
+            return board;
         }
 
         static string PrintBoard(char[,] board, bool referenceBoard=false)
