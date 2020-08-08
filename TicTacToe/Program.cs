@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
+using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 
 namespace TicTacToe
@@ -12,41 +14,45 @@ namespace TicTacToe
             int position;
             Console.Write("Pick size of game: ");
             int gameSize = Int32.Parse(Console.ReadLine());
-            char[,] referenceBoard = new char[,] { 
-            { '1', '2', '3' },
-            { '4', '5', '6'},
-            { '7', '8', '9'}};
             char[,] board = new char[gameSize, gameSize];
             bool gameComplete = false;
             int row;
             int column;
+            var exclude = new HashSet<int>();
+            var range = Enumerable.Range(1, gameSize *  gameSize);
+            var rand = new System.Random();
+            int cpuPosition;
             Console.WriteLine(PrintBoard(board, true));
             while (!gameComplete)
             {
+                //player choice
                 Console.Write("Choose your position: ");
                 position = Int32.Parse(Console.ReadLine()) - 1;
-                row = position / 3;
-                column = position % 3;
+                row = position / gameSize;
+                column = position % gameSize;
                 Console.WriteLine(row + " " + column);
                 board[row, column] = 'x';
+                //cpu choice
+                exclude.Add(position);
+                range = range.Where(i => !exclude.Contains(i));
+                cpuPosition = range.ElementAt(rand.Next(0, gameSize * gameSize - exclude.Count)) - 1;
+                exclude.Add(cpuPosition);
+                board[cpuPosition / gameSize, cpuPosition % gameSize] = 'o';
                 Console.WriteLine(PrintBoard(board));
-                if (GameWon(row, column, board))
+                if (GameWon(row, column, board, gameSize))
                 {
                     Console.WriteLine("Game Won");
                     gameComplete = true;
-                    Console.WriteLine("Play Again?");
-                    if (Console.ReadLine() == "yes")
+                    Console.Write("Play Again? ");
+                    if (Console.ReadLine() == "y")
                         gameComplete = false;
-                    board = new char[3, 3];
+                        Console.Write("Pick size of game: ");
+                        gameSize = Int32.Parse(Console.ReadLine());
+                        board = new char[gameSize, gameSize];
+                        Console.WriteLine(PrintBoard(board, true));
                 }
             }
         }
-
-        static (int, int) getRowColumn(int position)
-        {
-            return (position / 3, position % 3);
-        }
-
 
         static string PrintBoard(char[,] board, bool referenceBoard=false)
         {
@@ -72,116 +78,62 @@ namespace TicTacToe
             return printedBoard;
         }
 
-        static bool GameWon(int row, int col, char[,] board)
+        static bool GameWon(int row, int col, char[,] board, int gameSize)
         {
             char value = board[row, col];
-            int count = 0;
-            for (int i = col + 1; i < board.GetLength(1); i++)
+            bool gameWon = true;
+            for (int i = 0; i < board.GetLength(1); i++)
             {
                 // walk forwards through columns for current row
-                if (value == board[row, i])
-                    count++;
-                else
+                if (value != board[row, i])
+                {
+                    gameWon = false;
                     break;
+                }
             }
-            if (count < 2)
+            if (gameWon)
+                return gameWon;
+            gameWon = true;
+            // if still false then need to check vertical
+            for (int i = 0; i < board.GetLength(0); i++)
             {
-                // if 2 weren't found then walk backwards through columns for current row
-                for (int i = col - 1; i >= 0; i--)
+                // walk forwards through rows for current column
+                if (value != board[i, col])
                 {
-                    if (value == board[row, i])
-                        count++;
-                    else
-                        break;
+                    gameWon = false;
+                    break;
                 }
             }
-            else
-                return true;
-            if (count == 2)
-                return true;
-            else
+            if (gameWon)
+                return gameWon;
+            gameWon = true;
+            // if still false need to check diagonals
+            // check top left to bottom right
+            for (int i = 0; i < gameSize; i++)
             {
-                //Need to check vertical
-                count = 0;
-                for (int i = row + 1; i < board.GetLength(0); i++)
+                if (value != board[i, i])
                 {
-                    // walk forwards through rows for current column
-                    if (value == board[i, col])
-                        count++;
-                    else
-                        break;
-                }
-                if (count < 2)
-                {
-                    // if 2 weren't found then walk backwards through rows for current column
-                    for (int i = row - 1; i >= 0; i--)
-                    {
-                        if (value == board[i, col])
-                            count++;
-                        else
-                            break;
-                    }
-                }
-                else
-                    return true;
-                if (count == 2)
-                    return true;
-                else
-                {
-                    //Need to check diagonal
-                    if ((row == 0 && col == 0) || (row == 0 && col == 2) )
-                    {
-                        if (col == 0)
-                        {
-                            for (int i = 1; i < 3; i++)
-                            {
-                                if (value != board[row + i, col + i])
-                                    return false;
-                            }
-                            return true;
-                        }
-                        else
-                        {
-                            for (int i = 1; i < 3; i++)
-                            {
-                                if (value != board[row + i, col - i])
-                                    return false;
-                            }
-                            return true;
-                        }
-                    }
-                    else if (row == 1 && col == 1)
-                    {
-                        if (value == board[row - 1, col - 1] && value == board[row + 1, col + 1])
-                            return true;
-                        else
-                            return false;
-                    }
-                    else if ((row == 2 && col == 0) || (row == 2 && col == 2))
-                    {
-                        if (col == 0)
-                        {
-                            for (int i = 1; i < 3; i++)
-                            {
-                                if (value != board[row - i, col + i])
-                                    return false;
-                            }
-                            return true;
-                        }
-                        else
-                        {
-                            for (int i = 1; i < 3; i++)
-                            {
-                                if (value != board[row - i, col - i])
-                                    return false;
-                            }
-                            return true;
-                        }
-                    }
-                    else
-                        return false;
+                    gameWon = false;
+                    break;
                 }
             }
+            if (gameWon)
+                return gameWon;
+            gameWon = true;
+            // check top right to bottom left
+            int tempRow = 0;
+            for (int j = gameSize - 1; j >= 0; j--)
+            {
+                if (value != board[tempRow, j])
+                {
+                    gameWon = false;
+                    break;
+                }
+                tempRow++;
+            }
+            if (gameWon)
+                return gameWon;
+            return false;
         }
     }
 }
