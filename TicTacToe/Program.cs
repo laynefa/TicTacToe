@@ -19,16 +19,17 @@ namespace TicTacToe
             {
                 Console.Write("Choose your position: ");
                 position = Int32.Parse(Console.ReadLine()) - 1;
-                if (!board.PlacePosition(position, 'x'))
-                    Console.WriteLine("Position taken. Please choose another position.");
+                if (!board.PlacePlayerPosition(position, 'x'))
+                    Console.WriteLine("Position either invalid or taken. Please choose another position.");
                 else
                 {
                     if (board.gameComplete)
                     {
                         board.PrintBoard();
-                        Console.WriteLine("x won");
+                        Console.WriteLine("x won in " + board.turns + " turns");
                         gameComplete = RestartGame();
-                        board = InitializeGame();
+                        if (!gameComplete)
+                            board = InitializeGame();
                     }
                     else
                     {
@@ -36,9 +37,10 @@ namespace TicTacToe
                         board.PrintBoard();
                         if (board.gameComplete)
                         {
-                            Console.WriteLine("o won");
+                            Console.WriteLine("o won in " + board.turns + " turns");
                             gameComplete = RestartGame();
-                            board = InitializeGame();
+                            if (!gameComplete)
+                                board = InitializeGame();
                         }
                     }
                 }

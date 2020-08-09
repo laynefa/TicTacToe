@@ -9,11 +9,11 @@ namespace TicTacToe
     {
         char[,] board;
         public bool gameComplete;
-        int size;
-        int spaces;
+        readonly int size;
+        readonly int spaces;
         public int turns;
         List<int> options;
-        Random rand = new System.Random();
+        readonly Random rand = new System.Random();
 
         public Board(int gameSize)
         {
@@ -50,9 +50,9 @@ namespace TicTacToe
             Console.WriteLine(printedBoard);
         }
 
-        private bool IsPositionTaken(int position)
+        private bool IsValidPosition(int position)
         {
-            return !options.Contains(position);
+            return options.Contains(position);
         }
 
         private bool RemainingOptions()
@@ -66,30 +66,31 @@ namespace TicTacToe
             return true;
         }
 
-        public bool PlacePosition(int position, char symbol)
+        private bool PlacePosition(int position, char symbol)
         {
-            if (IsPositionTaken(position))
-                return false;
-            turns++;
             int row = position / size;
             int column = position % size;
-            Console.WriteLine(row + " " + column);
             board[row, column] = symbol;
             options.Remove(position);
             gameComplete = GameWon(position) || !RemainingOptions();
             return true;
         }
 
+        public bool PlacePlayerPosition(int position, char symbol)
+        {
+            if (!IsValidPosition(position))
+                return false;
+            turns++;
+            return PlacePosition(position, symbol);
+        }
+
         public void PlaceCpuPosition(char symbol)
         {
             int position = options[rand.Next(0, options.Count)];
-            options.Remove(position);
-            int row = position / size;
-            int column = position % size;
-            board[row, column] = 'o';
+            PlacePosition(position, symbol);
         }
 
-        public bool GameWon(int position)
+        private bool GameWon(int position)
         {
             int row = position / size;
             int col = position % size;
